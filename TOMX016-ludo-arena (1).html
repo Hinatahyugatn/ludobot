@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>TOMX016 Ludo Arena</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    :root{
+      --bg:#0a0a0f;--panel:#12121a;--panel-2:#1a1a26;--border:#2a2a40;--yellow:#ffd700;--blue:#4f8ef7;--red:#ff4757;--green:#2ed573;--cyan:#00d2ff;--purple:#a855f7;--text:#e8e8f0;--muted:#6b6b8a;--gold:#ffd700;--silver:#c0c0c0;--bronze:#cd7f32;
+      --yellow-glow:rgba(255,215,0,.30);--blue-glow:rgba(79,142,247,.30);--red-glow:rgba(255,71,87,.30);--green-glow:rgba(46,213,115,.30);
+      --safe-top:env(safe-area-inset-top,0px);--safe-bottom:env(safe-area-inset-bottom,0px);
+    }
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    *::-webkit-scrollbar{display:none}
+    html,body{height:100vh;overflow:hidden;margin:0;background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif}
+    body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.03;z-index:0;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E")}
+    button,input,textarea{font:inherit;outline:none}
+    .orbitron,.label,.title,.badge,.nav-label,.room-code,.logo-text{font-family:'Orbitron',sans-serif;text-transform:uppercase}
+    .page{position:fixed;inset:0;display:none;flex-direction:column;z-index:1;background:var(--bg)}
+    .page.active{display:flex}
+    .scroll{flex:1;overflow:auto;padding:calc(14px + var(--safe-top)) 14px calc(88px + var(--safe-bottom))}
+    .card{background:linear-gradient(180deg,rgba(26,26,38,.95),rgba(18,18,26,.96));border:1px solid var(--border);border-radius:18px;padding:14px;box-shadow:0 10px 30px rgba(0,0,0,.28);position:relative;overflow:hidden}
+    .card:active,.btn:active,.nav-btn:active,.menu-card:active,.room-card:active{transform:scale(.97)}
+    .section-title{font-family:'Orbitron',sans-serif;font-size:12px;letter-spacing:3px;color:var(--muted);margin:16px 4px 10px}
+    .btn{border:1px solid var(--border);border-radius:14px;padding:12px 14px;color:var(--text);background:linear-gradient(180deg,#202034,#151521);display:flex;align-items:center;justify-content:center;gap:8px;font-family:'Orbitron',sans-serif;letter-spacing:1.5px;text-transform:uppercase;font-size:12px;box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 0 0 1px rgba(0,210,255,.05),0 10px 20px rgba(0,0,0,.18);cursor:pointer}
+    .btn.primary{background:linear-gradient(135deg,rgba(0,210,255,.22),rgba(255,215,0,.16));border-color:rgba(0,210,255,.4);box-shadow:0 0 18px rgba(0,210,255,.16), inset 0 1px 0 rgba(255,255,255,.08)}
+    .btn.green{background:linear-gradient(135deg,rgba(46,213,115,.22),rgba(46,213,115,.10));border-color:rgba(46,213,115,.35)}
+    .btn.danger{background:linear-gradient(135deg,rgba(255,71,87,.26),rgba(255,71,87,.12));border-color:rgba(255,71,87,.4)}
+    .btn.gray{opacity:.55;pointer-events:none}
+    .input,.textarea{width:100%;background:#0f0f18;border:1px solid var(--border);border-radius:14px;color:var(--text);padding:12px 14px;font-family:'Orbitron',sans-serif;letter-spacing:1.5px}
+    .textarea{min-height:88px;resize:none;font-family:'Rajdhani',sans-serif;letter-spacing:.5px}
+    .row{display:flex;align-items:center}.between{justify-content:space-between}.gap8{gap:8px}.gap10{gap:10px}.gap12{gap:12px}.col{display:flex;flex-direction:column}
+    .muted{color:var(--muted)} .small{font-size:12px} .tiny{font-size:11px}
+    .loading-wrap{justify-content:center;align-items:center;gap:18px}
+    .logo-text{font-size:42px;font-weight:900;letter-spacing:3px;background:linear-gradient(90deg,var(--yellow),var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent}
+    .logo-sub{font-family:'Orbitron',sans-serif;letter-spacing:6px;color:var(--muted);font-size:12px}
+    .progress-wrap{width:220px;height:3px;background:#181823;border-radius:999px;overflow:hidden}
+    .progress-bar{height:100%;width:0;background:linear-gradient(90deg,var(--cyan),var(--yellow));transition:width .25s ease}
+    .blink{animation:blink 1s infinite}@keyframes blink{50%{opacity:.45}}
+    .hero{background:radial-gradient(circle at 88% 12%, rgba(0,210,255,.14), transparent 32%), linear-gradient(180deg,#191926,#12121a)}
+    .hero-title{font-family:'Orbitron',sans-serif;font-size:28px;font-weight:900;letter-spacing:2px;background:linear-gradient(90deg,var(--yellow),var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent}
+    .pills{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}.pill{background:#0f0f18;border:1px solid var(--border);border-radius:14px;padding:10px;text-align:center}.pill .num{font-family:'Orbitron',sans-serif;font-size:18px;color:var(--cyan)}.pill .lbl{font-size:10px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;font-family:'Orbitron',sans-serif}
+    .avatar{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,var(--purple),var(--cyan));border:2px solid rgba(0,210,255,.5);font-family:'Orbitron',sans-serif;font-size:22px;font-weight:900}
+    .xp{height:8px;background:#0e0e16;border-radius:999px;overflow:hidden;border:1px solid var(--border)} .xp-fill{height:100%;width:0;background:linear-gradient(90deg,var(--purple),var(--cyan));transition:width .35s ease}
+    .menu-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.menu-card{min-height:124px;cursor:pointer}.menu-card.featured{border-color:rgba(0,210,255,.45);background:linear-gradient(180deg,rgba(0,210,255,.15),rgba(18,18,26,.95))}.badge-live{position:absolute;top:10px;right:10px;background:rgba(255,71,87,.16);border:1px solid rgba(255,71,87,.4);color:var(--red);border-radius:999px;padding:4px 8px;font-size:10px;font-family:'Orbitron',sans-serif;letter-spacing:2px}.emoji{font-size:32px}
+    .bottom-nav,.admin-nav{position:fixed;left:0;right:0;bottom:0;display:flex;gap:8px;padding:8px 10px calc(8px + var(--safe-bottom));background:linear-gradient(180deg,rgba(10,10,15,.1),rgba(10,10,15,.94));backdrop-filter:blur(10px);z-index:6}.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border:1px solid var(--border);border-radius:14px;background:#141420;padding:8px 4px;color:var(--muted)}.nav-btn.active{color:var(--cyan);border-color:rgba(0,210,255,.35);box-shadow:0 0 14px rgba(0,210,255,.12)}.nav-label{font-size:9px;letter-spacing:1.2px}.icon20{font-size:20px}
+    .heading{font-family:'Orbitron',sans-serif;font-size:18px;letter-spacing:2px}.rooms{display:flex;flex-direction:column;gap:10px}.room-card{display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer}.color-dots{display:flex;gap:6px}.dot{width:10px;height:10px;border-radius:50%;opacity:.22}.dot.filled{opacity:1}.yellow{background:var(--yellow)}.blue{background:var(--blue)}.green{background:var(--green)}.red{background:var(--red)}
+    .game-shell{display:flex;flex-direction:column;height:100%;padding:calc(6px + var(--safe-top)) 6px calc(6px + var(--safe-bottom))}
+    .topbar{height:36px;display:grid;grid-template-columns:42px 1fr auto;align-items:center;gap:8px;margin-bottom:6px}.icon-btn{width:36px;height:36px;border-radius:12px;border:1px solid var(--border);background:#141420;color:var(--text);display:grid;place-items:center}.room-badge,.phase-badge{height:32px;border:1px solid var(--border);border-radius:12px;background:#151521;display:grid;place-items:center;padding:0 10px;font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:1.6px}.phase-badge.live{color:var(--green)}
+    .player-strip{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px}.player-card{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;border-radius:14px;background:#141420;border:1px solid var(--border);min-width:0}.player-card.active-yellow{border-color:rgba(255,215,0,.55);box-shadow:0 0 16px var(--yellow-glow)}.player-card.active-blue{border-color:rgba(79,142,247,.55);box-shadow:0 0 16px var(--blue-glow)}.player-card.active-green{border-color:rgba(46,213,115,.55);box-shadow:0 0 16px var(--green-glow)}.player-card.active-red{border-color:rgba(255,71,87,.55);box-shadow:0 0 16px var(--red-glow)}.truncate{overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.status-badge{padding:3px 8px;border-radius:999px;font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:1.4px;background:#0f0f18;color:var(--muted);border:1px solid var(--border)}
+    .board-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:4px;min-height:0}.board-host{width:100%;height:100%;display:flex;align-items:center;justify-content:center}.board-canvas{border-radius:8px;box-shadow:0 10px 24px rgba(0,0,0,.35);cursor:pointer;touch-action:none}
+    .controls{height:66px;display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center}.dice-btn{width:54px;height:54px;border-radius:16px;background:#fff;color:#111;border:0;font-size:28px;display:grid;place-items:center;box-shadow:0 8px 20px rgba(255,255,255,.18)}.dice-btn.disabled{opacity:.4;pointer-events:none}.scorebox,.turnbox{height:54px;border:1px solid var(--border);border-radius:14px;background:#151521;padding:8px 10px;display:flex;flex-direction:column;justify-content:center}.scorebox{text-align:right}.score-val,.turn-color{font-family:'Orbitron',sans-serif}
+    .tabs{display:flex;gap:8px;margin-bottom:10px}.tab{flex:1;padding:10px;border-radius:12px;border:1px solid var(--border);background:#151521;color:var(--muted);font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:1.5px}.tab.active{color:var(--cyan);border-color:rgba(0,210,255,.35)}
+    .podium{display:grid;grid-template-columns:1fr 1.2fr 1fr;gap:10px;align-items:end;margin-bottom:12px}.pod{padding:12px;border-radius:18px;text-align:center;border:1px solid var(--border);background:#151521}.pod.first{min-height:180px;border-color:rgba(255,215,0,.35);box-shadow:0 0 20px rgba(255,215,0,.12)}.pod.second{min-height:150px;border-color:rgba(192,192,192,.35)}.pod.third{min-height:132px;border-color:rgba(205,127,50,.35)}.medal{font-size:22px}.rank-avatar{width:56px;height:56px;border-radius:50%;margin:8px auto;display:grid;place-items:center;font-family:'Orbitron',sans-serif;font-weight:900}
+    .list{display:flex;flex-direction:column;gap:8px}.rank-row,.tour-card,.recent-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-radius:14px;background:#151521;border:1px solid var(--border)}.rank-row.me{border-color:rgba(0,210,255,.4);background:linear-gradient(135deg,rgba(0,210,255,.10),rgba(168,85,247,.08))}
+    .banner-live{border-color:rgba(255,71,87,.4);background:linear-gradient(135deg,rgba(255,71,87,.15),rgba(18,18,26,.95));margin-bottom:12px}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.stats-grid .stat{padding:12px;border-radius:14px;background:#151521;border:1px solid var(--border)}.switch{display:flex;align-items:center;justify-content:space-between;padding:10px 0}.toggle{width:48px;height:28px;border-radius:999px;background:#25253a;border:1px solid var(--border);position:relative;cursor:pointer}.toggle::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:.22s ease}.toggle.on{background:rgba(0,210,255,.22);border-color:rgba(0,210,255,.4)}.toggle.on::after{left:23px;background:var(--cyan)}
+    .admin-shell{padding-bottom:82px}.hidden{display:none!important}
+    .modal{position:fixed;inset:0;background:rgba(0,0,0,.58);display:none;align-items:center;justify-content:center;padding:18px;z-index:12}.modal.open{display:flex}.modal-box{width:min(92vw,380px);background:linear-gradient(180deg,#1a1a26,#12121a);border:1px solid var(--border);border-radius:20px;padding:18px;box-shadow:0 20px 40px rgba(0,0,0,.42)}
+    .toast{position:fixed;left:50%;bottom:calc(80px + var(--safe-bottom));transform:translate(-50%,20px);opacity:0;transition:all .3s ease;z-index:15;background:#151521;border:1px solid var(--border);border-radius:999px;padding:10px 14px;font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:1.5px;white-space:nowrap;max-width:90vw;overflow:hidden;text-overflow:ellipsis}.toast.show{opacity:1;transform:translate(-50%,0)}
+    @media (max-width:480px){.podium{grid-template-columns:1fr;align-items:stretch}.pod.first,.pod.second,.pod.third{min-height:auto}.rank-row{padding:10px;gap:8px}.tabs{position:sticky;top:0;z-index:2;background:var(--bg);padding-bottom:8px}#chatMini{width:min(52vw,170px);right:6px}.heading{font-size:16px}}
+    @media (min-width:700px){.scroll{padding-inline:18px}.game-shell{max-width:520px;margin:0 auto;width:100%}.bottom-nav,.admin-nav{left:50%;transform:translateX(-50%);max-width:520px;border-radius:18px 18px 0 0}}
+  </style>
+</head>
+<body>
+  <div id="loading" class="page active loading-wrap">
+    <div class="logo-text">TOMX016</div>
+    <div class="logo-sub">LUDO ARENA</div>
+    <div class="progress-wrap"><div id="loadingBar" class="progress-bar"></div></div>
+    <div id="loadingTip" class="logo-sub blink">CONNECTING TO SERVER</div>
+  </div>
+
+  <div id="home" class="page">
+    <div class="scroll">
+      <div class="card hero">
+        <div class="hero-title">TOMX016</div>
+        <div class="muted orbitron" style="letter-spacing:3px;font-size:11px;margin-top:4px">LUDO ARENA × MULTIPLAYER</div>
+        <div class="pills">
+          <div class="pill"><div id="statOnline" class="num">0</div><div class="lbl">Online</div></div>
+          <div class="pill"><div id="statRooms" class="num">0</div><div class="lbl">Rooms</div></div>
+          <div class="pill"><div id="statGames" class="num">0</div><div class="lbl">Games</div></div>
+        </div>
+      </div>
+      <div class="card" style="margin-top:12px">
+        <div class="row gap12">
+          <div id="homeAvatar" class="avatar">G</div>
+          <div class="col" style="flex:1;min-width:0">
+            <div id="homeName" class="heading truncate" style="font-size:16px">Guest</div>
+            <div id="homeRank" class="muted small">0 WINS • 0 XP</div>
+            <div class="xp" style="margin-top:10px"><div id="homeXpFill" class="xp-fill"></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="section-title">Choose Arena</div>
+      <div class="menu-grid">
+        <div class="card menu-card featured" data-nav="lobby"><div class="emoji">🎲</div><div class="heading" style="font-size:15px;margin-top:8px">Play Now</div><div class="muted small">Jump into a live room</div></div>
+        <div class="card menu-card" data-nav="tournament"><div class="badge-live">LIVE</div><div class="emoji">🏆</div><div class="heading" style="font-size:15px;margin-top:8px">Tournament</div><div class="muted small">Join event brackets</div></div>
+        <div class="card menu-card" data-nav="leaderboard"><div class="emoji">📈</div><div class="heading" style="font-size:15px;margin-top:8px">Leaderboard</div><div class="muted small">See top players</div></div>
+        <div class="card menu-card" data-nav="admin"><div class="emoji">⚙️</div><div class="heading" style="font-size:15px;margin-top:8px">Admin</div><div class="muted small">Control game systems</div></div>
+      </div>
+    </div>
+    <div class="bottom-nav" id="mainNav">
+      <button class="nav-btn active" data-page="home"><div class="icon20">🏠</div><div class="nav-label">Home</div></button>
+      <button class="nav-btn" data-page="lobby"><div class="icon20">🎮</div><div class="nav-label">Play</div></button>
+      <button class="nav-btn" data-page="leaderboard"><div class="icon20">🏅</div><div class="nav-label">Ranks</div></button>
+      <button class="nav-btn" data-page="tournament"><div class="icon20">🎉</div><div class="nav-label">Events</div></button>
+    </div>
+  </div>
+
+  <div id="lobby" class="page">
+    <div class="scroll">
+      <div class="heading" style="margin-bottom:12px">Game Lobby</div>
+      <div class="card">
+        <div class="section-title" style="margin:0 0 10px">Create or Join a Room</div>
+        <input id="roomInput" class="input" maxlength="10" placeholder="ENTER ROOM CODE" oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'')" />
+        <div class="grid2" style="margin-top:10px">
+          <button class="btn primary" id="joinBtn">⚡ Join Game</button>
+          <button class="btn" id="createRoomBtn">🛠️ Create Room</button>
+        </div>
+      </div>
+      <div class="section-title">Active Rooms</div>
+      <div id="roomList" class="rooms"></div>
+    </div>
+    <div class="bottom-nav">
+      <button class="nav-btn" data-page="home"><div class="icon20">🏠</div><div class="nav-label">Home</div></button>
+      <button class="nav-btn active" data-page="lobby"><div class="icon20">🎮</div><div class="nav-label">Play</div></button>
+      <button class="nav-btn" data-page="leaderboard"><div class="icon20">🏅</div><div class="nav-label">Ranks</div></button>
+      <button class="nav-btn" data-page="tournament"><div class="icon20">🎉</div><div class="nav-label">Events</div></button>
+    </div>
+  </div>
+
+  <div id="game" class="page">
+    <div class="game-shell">
+      <div class="topbar">
+        <button class="icon-btn" id="leaveBtn">←</button>
+        <div id="roomBadge" class="room-badge">ROOM ----</div>
+        <div id="phaseBadge" class="phase-badge">WAITING</div>
+      </div>
+      <div id="playerStrip" class="player-strip"></div>
+      <div class="board-wrap"><div id="boardHost" class="board-host"><canvas id="ludoCanvas" class="board-canvas"></canvas></div></div>
+      <div class="controls">
+        <div class="turnbox"><div class="tiny orbitron muted">TURN</div><div id="turnLabel" class="turn-color">YELLOW</div><div id="turnHint" class="tiny muted">Waiting for room</div><div id="turnTimer" class="tiny muted">30s</div></div>
+        <button id="diceBtn" class="dice-btn disabled">🎲</button>
+        <div class="scorebox"><div class="tiny orbitron muted">SCORE</div><div id="scoreVal" class="score-val">0</div><div class="tiny muted">Tokens Home</div></div>
+      </div>
+    </div>
+    <div id="chatMini" class="card" style="position:fixed;right:8px;bottom:calc(84px + var(--safe-bottom));width:min(46vw,180px);padding:10px;z-index:8">
+      <div class="row between"><div class="orbitron tiny muted">Live Chat</div><button id="chatToggle" class="icon-btn" style="width:24px;height:24px;border-radius:8px;font-size:12px">+</button></div>
+      <div id="chatPreview" class="small muted" style="margin-top:8px;max-height:68px;overflow:auto">No messages</div>
+      <div id="chatPanel" class="hidden" style="margin-top:8px"><div id="chatMessages" class="small" style="max-height:140px;overflow:auto;display:flex;flex-direction:column;gap:6px"></div><div class="row gap8" style="margin-top:8px"><input id="chatInput" class="input" maxlength="120" placeholder="Chat" style="padding:8px 10px;font-family:Rajdhani"><button id="chatSend" class="btn primary" style="padding:8px 10px;min-width:58px">Send</button></div></div>
+    </div>
+  </div>
+
+  <div id="leaderboard" class="page">
+    <div class="scroll">
+      <div class="heading" style="margin-bottom:10px">Leaderboard</div>
+      <div class="tabs"><button class="tab active" data-ltab="global">Global</button><button class="tab" data-ltab="weekly">Weekly</button><button class="tab" data-ltab="friends">Friends</button></div>
+      <div id="podium" class="podium"></div>
+      <div id="leaderRows" class="list"></div>
+    </div>
+    <div class="bottom-nav">
+      <button class="nav-btn" data-page="home"><div class="icon20">🏠</div><div class="nav-label">Home</div></button>
+      <button class="nav-btn" data-page="lobby"><div class="icon20">🎮</div><div class="nav-label">Play</div></button>
+      <button class="nav-btn active" data-page="leaderboard"><div class="icon20">🏅</div><div class="nav-label">Ranks</div></button>
+      <button class="nav-btn" data-page="tournament"><div class="icon20">🎉</div><div class="nav-label">Events</div></button>
+    </div>
+  </div>
+
+  <div id="tournament" class="page">
+    <div class="scroll">
+      <div id="liveBanner"></div>
+      <div class="heading" style="margin-bottom:12px">Tournaments</div>
+      <div id="tournamentList" class="list"></div>
+    </div>
+    <div class="bottom-nav">
+      <button class="nav-btn" data-page="home"><div class="icon20">🏠</div><div class="nav-label">Home</div></button>
+      <button class="nav-btn" data-page="lobby"><div class="icon20">🎮</div><div class="nav-label">Play</div></button>
+      <button class="nav-btn" data-page="leaderboard"><div class="icon20">🏅</div><div class="nav-label">Ranks</div></button>
+      <button class="nav-btn active" data-page="tournament"><div class="icon20">🎉</div><div class="nav-label">Events</div></button>
+    </div>
+  </div>
+
+  <div id="admin" class="page">
+    <div class="scroll admin-shell">
+      <div id="adminLogin" class="card">
+        <div class="emoji">🔒</div><div class="heading" style="margin-top:6px">Admin Panel</div><div class="muted">Enter secure access password</div>
+        <input id="adminPass" class="input" type="password" placeholder="PASSWORD" style="margin-top:12px" />
+        <button id="adminEnter" class="btn primary" style="margin-top:10px">Enter</button>
+        <div id="adminError" class="small" style="color:var(--red);margin-top:10px;display:none">Wrong password</div>
+      </div>
+      <div id="adminPanel" class="hidden">
+        <div class="heading" style="margin-bottom:12px">System Controls</div>
+        <div class="grid2 stats-grid">
+          <div class="stat"><div class="tiny orbitron muted">Users</div><div id="adminUsers" class="heading">0</div></div>
+          <div class="stat"><div class="tiny orbitron muted">Rooms</div><div id="adminRooms" class="heading">0</div></div>
+          <div class="stat"><div class="tiny orbitron muted">Games</div><div id="adminGames" class="heading">0</div></div>
+          <div class="stat"><div class="tiny orbitron muted">Tournaments</div><div id="adminTours" class="heading">0</div></div>
+        </div>
+        <div class="card" style="margin-top:12px">
+          <div class="section-title" style="margin:0 0 10px">Create Tournament</div>
+          <div class="col gap8"><input id="tourName" class="input" placeholder="Tournament Name"><input id="tourPrize" class="input" placeholder="Prize"><input id="tourMax" class="input" type="number" placeholder="Max Players"><input id="tourStart" class="input" type="datetime-local"></div>
+          <button id="createTourBtn" class="btn primary" style="margin-top:10px">Create</button>
+        </div>
+        <div class="card" style="margin-top:12px"><div class="section-title" style="margin:0 0 10px">Broadcast</div><textarea id="broadcastText" class="textarea" placeholder="Type system message"></textarea><button id="sendBroadcastBtn" class="btn primary" style="margin-top:10px">Send Broadcast</button></div>
+        <div class="card" style="margin-top:12px"><div class="section-title" style="margin:0 0 10px">Tournament Controls</div><div class="grid2"><button id="startTourBtn" class="btn primary">Start Selected</button><input id="startTourId" class="input" placeholder="Tournament ID"></div><div class="small muted" style="margin-top:8px">Starting a tournament sends invite access to joined members.</div></div>
+        <div class="card" style="margin-top:12px"><div class="section-title" style="margin:0 0 10px">Send Reward</div><div class="col gap8"><input id="rewardUserId" class="input" placeholder="User ID"><input id="rewardAmount" class="input" type="number" placeholder="Reward Amount"><button id="sendRewardBtn" class="btn primary">Send Reward</button></div></div>
+        <div class="card" style="margin-top:12px"><div class="section-title" style="margin:0 0 10px">Settings</div><div id="settingsWrap"></div></div>
+        <div class="card" style="margin-top:12px"><div class="section-title" style="margin:0 0 10px">Recent Players</div><div id="recentPlayers" class="list"></div></div>
+        <div class="card" style="margin-top:12px"><div class="section-title" style="margin:0 0 10px">Danger Zone</div><div class="grid2"><button id="clearRoomsBtn" class="btn danger">Clear Rooms</button><button id="resetScoresBtn" class="btn danger">Reset Scores</button></div></div>
+      </div>
+    </div>
+    <div id="adminNav" class="admin-nav hidden">
+      <button class="nav-btn" data-page="home"><div class="icon20">🏠</div><div class="nav-label">Home</div></button>
+      <button class="nav-btn active" data-page="admin"><div class="icon20">⚙️</div><div class="nav-label">Admin</div></button>
+    </div>
+  </div>
+
+  <div id="leaveModal" class="modal"><div class="modal-box"><div class="emoji">🚪</div><div class="heading" style="margin-top:6px">Leave Game</div><p class="muted">You will be removed from this room.</p><div class="grid2" style="margin-top:14px"><button class="btn" onclick="closeModal('leaveModal')">Stay</button><button id="confirmLeaveBtn" class="btn danger">Leave</button></div></div></div>
+  <div id="winnerModal" class="modal"><div class="modal-box"><div class="emoji">🏆</div><div id="winnerTitle" class="heading" style="margin-top:6px">Yellow Wins</div><p id="winnerName" class="muted">Player</p><button id="newGameBtn" class="btn primary" style="margin-top:14px">New Game</button></div></div>
+  <div id="confirmModal" class="modal"><div class="modal-box"><div id="confirmIcon" class="emoji">⚠️</div><div id="confirmTitle" class="heading" style="margin-top:6px">Confirm</div><p id="confirmSub" class="muted">Proceed?</p><div class="grid2" style="margin-top:14px"><button class="btn" onclick="closeModal('confirmModal')">Cancel</button><button id="confirmOk" class="btn danger">OK</button></div></div></div>
+  <div id="toast" class="toast">Ready</div>
+
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+    import { getDatabase, ref, set, get, update, onValue, push, remove, serverTimestamp, runTransaction } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
+
+    const firebaseConfig={apiKey:'AIzaSyBSxOefW7eIfl9ih0OBfdHgHv0A4gbVMfA',authDomain:'tomx016.firebaseapp.com',databaseURL:'https://tomx016-default-rtdb.asia-southeast1.firebasedatabase.app',projectId:'tomx016',storageBucket:'tomx016.firebasestorage.app',messagingSenderId:'275863059765',appId:'1:275863059765:web:e06671942e5c85368b607c'};
+    const COLORS=['yellow','blue','green','red'];
+    const ENTRY={yellow:0,blue:13,red:26,green:39};
+    const HOME_ENTRY={yellow:51,blue:11,red:24,green:37};
+    const SAFE=[0,8,13,21,26,34,39,47];
+    const HOME_STRETCH={yellow:[ [7,1],[7,2],[7,3],[7,4],[7,5],[7,6] ],blue:[[1,7],[2,7],[3,7],[4,7],[5,7],[6,7]],red:[[7,13],[7,12],[7,11],[7,10],[7,9],[7,8]],green:[[13,7],[12,7],[11,7],[10,7],[9,7],[8,7]]};
+    const BASES={yellow:[0,0],blue:[0,9],green:[9,0],red:[9,9]};
+    const COLOR_HEX={yellow:'#ffd700',blue:'#4f8ef7',green:'#2ed573',red:'#ff4757'};
+    const DICE=['⚀','⚁','⚂','⚃','⚄','⚅'];
+    const OUTER_PATH=(function(){ const p=[]; for(let c=1;c<=5;c++)p.push([6,c]); for(let r=5;r>=0;r--)p.push([r,6]); for(let c=7;c<=8;c++)p.push([0,c]); for(let r=1;r<=5;r++)p.push([r,8]); for(let c=9;c<=14;c++)p.push([6,c]); p.push([7,14]); for(let c=14;c>=9;c--)p.push([8,c]); for(let r=9;r<=14;r++)p.push([r,8]); p.push([14,7]); for(let r=13;r>=9;r--)p.push([r,7]); p.push([8,6]); for(let c=5;c>=0;c--)p.push([8,c]); p.push([7,0]); return p; })();
+
+    const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+    const tg=window.Telegram?.WebApp;
+    let app,db,currentUser=null,userData={wins:0,games:0,xp:0,rewards:0},loadingDone=false,roomMap={},allUsers={},allTournaments={},configState={maintenanceMode:false,tournamentMode:false,leaderboardPublic:true};
+    let roomUnsub=null,watchersStarted=false,renderHandle=0,resizeTimer=0,pulseT=0,awaitingMove=false,winnerShown=false,diceAnimTimer=null,autoPassTimer=null,winAwarded=false,currentLeaderboardTab='global';
+    let gameState={roomCode:'',room:null,myColor:null,myPlayer:null,role:'player'};
+
+    const haptic={sel:()=>tg?.HapticFeedback?.selectionChanged?.(),med:()=>tg?.HapticFeedback?.impactOccurred?.('medium'),rigid:()=>tg?.HapticFeedback?.impactOccurred?.('rigid'),ok:()=>tg?.HapticFeedback?.notificationOccurred?.('success'),err:()=>tg?.HapticFeedback?.notificationOccurred?.('error')};
+
+    function showToast(text,d=2000){const t=$('#toast');t.textContent=text;t.classList.add('show');clearTimeout(t._timer);t._timer=setTimeout(()=>t.classList.remove('show'),d)}
+    window.closeModal=id=>document.getElementById(id).classList.remove('open');
+    function openModal(id){document.getElementById(id).classList.add('open')}
+    function showPage(id){$$('.page').forEach(p=>p.classList.remove('active')); $('#'+id).classList.add('active'); $$('.nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.page===id)); $('#adminNav').classList.toggle('hidden',id!=='admin' || $('#adminPanel').classList.contains('hidden')); haptic.sel(); if(id==='leaderboard') loadLeaderboard(); if(id==='tournament') loadTournaments(); if(id==='lobby') renderRooms(); if(id==='admin'){} }
+
+    function randCode(){const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';let s='';for(let i=0;i<6;i++)s+=chars[Math.floor(Math.random()*chars.length)];return s}
+    function nextColor(color){return COLORS[(COLORS.indexOf(color)+1)%4]}
+    function deepClone(v){return JSON.parse(JSON.stringify(v))}
+    function roomPath(code,p=''){return `rooms/${code}${p?'/'+p:''}`}
+    function fbUpdate(code,data){const flat={}; for(const [k,v] of Object.entries(data)) flat[roomPath(code,k)]=v; return update(ref(db),flat)}
+    function getDefaultTokens(){return {yellow:[-1,-1,-1,-1],blue:[-1,-1,-1,-1],green:[-1,-1,-1,-1],red:[-1,-1,-1,-1]}}
+    function getCoord(color,pos){ if(pos>=52&&pos<=57){ const rc=HOME_STRETCH[color][pos-52]; return {row:rc[0],col:rc[1]}; } if(pos>=0&&pos<=51){ const rc=OUTER_PATH[pos]; return {row:rc[0],col:rc[1]}; } return null; }
+    function getBaseCorner(color){const [row,col]=BASES[color]; return {row,col}}
+    function getBaseSpots(row,col){return[[row+1.5,col+1.5],[row+1.5,col+3.5],[row+3.5,col+1.5],[row+3.5,col+3.5]]}
+    function getStackOffset(total,idx){ if(total<=1) return {x:0,y:0}; const arr=[[-.5,-.5],[.5,-.5],[-.5,.5],[.5,.5]]; const a=arr[idx%4]; return {x:a[1]*.22,y:a[0]*.22}; }
+    function calcNewPos(color,pos,steps){ if(pos===-1) return steps===6?ENTRY[color]:null; let cur=pos; for(let i=0;i<steps;i++){ if(cur<52 && cur===HOME_ENTRY[color]) cur=52; else if(cur<52) cur=(cur+1)%52; else if(cur>=52 && cur<=56) cur++; else if(cur===57) return null; } if(cur>57) return null; if(cur===57) return 58; return cur; }
+    function isTokenPlayable(color,idx,roll){ const p=gameState.room?.tokens?.[color]?.[idx]; if(p===58) return false; return calcNewPos(color,p,roll)!==null; }
+    function currentPlayerColor(){return gameState.room?.currentTurn || 'yellow'}
+    function myTurn(){return !!gameState.myColor && currentPlayerColor()===gameState.myColor}
+
+    function renderPlayerStrip(){ const wrap=$('#playerStrip'); const players=gameState.room?.players||{}; const byColor={}; Object.entries(players).forEach(([uid,p])=>{byColor[p.color]=p}); wrap.innerHTML=COLORS.map(c=>{ const p=byColor[c]; const active=currentPlayerColor()===c?`active-${c}`:''; const avatar=p?.photo?`<img src="${p.photo}" alt="${p.name||c}" style="width:22px;height:22px;border-radius:50%;object-fit:cover;border:1px solid rgba(255,255,255,.15)">`:`<span class="dot ${c} filled"></span>`; return `<div class="player-card ${active}"><div class="row gap8" style="min-width:0">${avatar}<span class="truncate">${p?.name||c.toUpperCase()}</span></div><div class="status-badge">${currentPlayerColor()===c?'TURN':'WAIT'}</div></div>`}).join(''); }
+
+    function colorTakenMap(room){const taken={yellow:false,blue:false,green:false,red:false}; Object.values(room?.players||{}).forEach(p=>{ if(p?.color) taken[p.color]=true; }); return taken; }
+    function renderRooms(){ const list=$('#roomList'); const entries=Object.entries(roomMap||{}).slice(0,10); if(!entries.length){ list.innerHTML='<div class="card muted">No active rooms yet.</div>'; return; } list.innerHTML=entries.map(([id,room])=>{ const count=Object.keys(room.players||{}).length; const taken=colorTakenMap(room); const full=count>=4; return `<div class="card room-card" data-code="${id}"><div class="col" style="min-width:0"><div class="room-code" style="font-size:14px;letter-spacing:2px">${id}</div><div class="small muted">${count} of 4 players • ${count>=2?'Ready':'Need 2+'}</div><div class="color-dots" style="margin-top:8px">${COLORS.map(c=>`<span class="dot ${c} ${taken[c]?'filled':''}"></span>`).join('')}</div></div><div class="row gap8"><button class="btn ${full?'gray':'green'} join-room-btn" data-code="${id}" style="min-width:74px">${full?'Full':'Join'}</button><button class="btn spectate-room-btn" data-code="${id}" style="min-width:74px">View</button></div></div>`; }).join(''); $$('#roomList .join-room-btn').forEach(el=>el.onclick=(e)=>{e.stopPropagation();joinRoomByCode(el.dataset.code);}); $$('#roomList .spectate-room-btn').forEach(el=>el.onclick=(e)=>{e.stopPropagation();joinRoom(el.dataset.code,true);}); $$('#roomList .room-card').forEach(el=>el.onclick=()=>joinRoomByCode(el.dataset.code)); }
+
+    function renderHomeUser(){ if(currentUser.photo){ $('#homeAvatar').innerHTML=`<img src="${currentUser.photo}" alt="profile" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`; } else { $('#homeAvatar').textContent=currentUser.initial; } $('#homeName').textContent=currentUser.name; $('#homeRank').textContent=`${userData.wins||0} WINS • ${userData.xp||0} XP • ${userData.rewards||0} REWARD`; $('#homeXpFill').style.width=`${(userData.xp||0)%100}%`; }
+
+    async function initUser(){ const tgu=tg?.initDataUnsafe?.user; const guest='guest_'+Math.random().toString(36).slice(2,8); currentUser={ id:String(tgu?.id||guest), name:tgu?.username?('@'+tgu.username):(tgu?.first_name||'Guest'), initial:(tgu?.first_name?.[0]||'G').toUpperCase(), photo:tgu?.photo_url||'' };
+      const uref=ref(db,'users/'+currentUser.id); const snap=await get(uref);
+      if(!snap.exists()) await set(uref,{name:currentUser.name,initial:currentUser.initial,photo:currentUser.photo||'',wins:0,games:0,xp:0,rewards:0,joinedAt:Date.now(),lastSeen:Date.now()});
+      else await update(uref,{name:currentUser.name,photo:currentUser.photo||'',lastSeen:Date.now()});
+      const now=(await get(uref)).val()||{}; userData={wins:now.wins||0,games:now.games||0,xp:now.xp||0,rewards:now.rewards||0}; renderHomeUser();
+      await set(ref(db,'presence/'+currentUser.id),{name:currentUser.name,photo:currentUser.photo||'',timestamp:Date.now()});
+      window.addEventListener('beforeunload',()=>set(ref(db,'presence/'+currentUser.id),{name:currentUser.name,photo:currentUser.photo||'',timestamp:Date.now()}));
+    }
+
+    function startWatchers(){ if(watchersStarted) return; watchersStarted=true;
+      onValue(ref(db,'presence'),snap=>{ const v=snap.val()||{}; const now=Date.now(); const n=Object.values(v).filter(x=>now-(x.timestamp||0)<120000).length; $('#statOnline').textContent=n; });
+      onValue(ref(db,'rooms'),snap=>{ roomMap=snap.val()||{}; $('#statRooms').textContent=Object.keys(roomMap).length; renderRooms(); $('#adminRooms').textContent=Object.keys(roomMap).length; });
+      onValue(ref(db,'stats/totalGames'),snap=>{ const n=snap.val()||0; $('#statGames').textContent=n; $('#adminGames').textContent=n; });
+      onValue(ref(db,'broadcast'),snap=>{ const msg=snap.val(); if(msg && Date.now()-(msg.timestamp||0)<30000 && msg.message) showToast(msg.message,2800); });
+      onValue(ref(db,'users'),snap=>{ allUsers=snap.val()||{}; $('#adminUsers').textContent=Object.keys(allUsers).length; loadLeaderboard(); renderRecentPlayers(); });
+      onValue(ref(db,'tournaments'),snap=>{ allTournaments=snap.val()||{}; $('#adminTours').textContent=Object.keys(allTournaments).length; loadTournaments(); });
+      onValue(ref(db,'config'),snap=>{ configState={maintenanceMode:false,tournamentMode:false,leaderboardPublic:true,...(snap.val()||{})}; renderSettings(); });
+    }
+
+    async function joinOrCreate(){ const code=$('#roomInput').value.trim().toUpperCase(); if(!code) return showToast('ENTER ROOM CODE'); joinRoom(code); }
+    async function createRoom(){ let code=$('#roomInput').value.trim().toUpperCase()||randCode(); $('#roomInput').value=code; const base={roomId:code,createdAt:Date.now(),private:false,phase:'waiting',minPlayers:2,maxPlayers:4,currentTurn:'yellow',turnStartedAt:Date.now(),diceRoll:0,turnUsed:true,winner:null,tokens:getDefaultTokens(),players:{},spectators:{},chat:{}}; base.players[currentUser.id]={name:currentUser.name,id:currentUser.id,color:'yellow',joinedAt:Date.now(),photo:currentUser.photo||''}; await set(ref(db,'rooms/'+code),base); startGame(code,'yellow','player'); showToast('ROOM CREATED'); }
+    async function joinRoomByCode(code){ $('#roomInput').value=code; joinRoom(code); }
+    async function joinRoom(code,asSpectator=false){ code=code.toUpperCase(); if(configState.maintenanceMode) return showToast('MAINTENANCE MODE ACTIVE');
+      const rref=ref(db,'rooms/'+code); const snap=await get(rref); const existing=snap.val()||null; let room=existing||{roomId:code,createdAt:Date.now(),private:false,phase:'waiting',currentTurn:'yellow',diceRoll:0,turnUsed:true,winner:null,tokens:getDefaultTokens(),players:{}};
+      let myColor=null; const players=room.players||{}; room.spectators=room.spectators||{}; if(asSpectator){ room.spectators[currentUser.id]={name:currentUser.name,id:currentUser.id,photo:currentUser.photo||'',joinedAt:Date.now()}; await set(rref,room); return startGame(code,null,'spectator'); } if(players[currentUser.id]?.color) myColor=players[currentUser.id].color; else { const count=Object.keys(players).length; if(count>=4) return showToast('ROOM IS FULL'); myColor=COLORS.find(c=>!Object.values(players).some(p=>p.color===c)); players[currentUser.id]={name:currentUser.name,id:currentUser.id,color:myColor,joinedAt:Date.now(),photo:currentUser.photo||''}; }
+      room.players=players; room.updatedAt=Date.now(); room.minPlayers=2; room.maxPlayers=4; if(Object.keys(players).length>=2 && room.phase==='waiting') { room.phase='playing'; room.turnStartedAt=Date.now(); }
+      await set(rref,room); startGame(code,myColor,'player'); }
+
+    function startGame(code,myColor,role='player'){ gameState.roomCode=code; gameState.myColor=myColor; gameState.role=role; winnerShown=false; winAwarded=false; awaitingMove=false; showPage('game'); setTimeout(initCanvas,120); if(roomUnsub) roomUnsub(); roomUnsub=onValue(ref(db,'rooms/'+code),snap=>{ const room=snap.val(); if(!room){ showToast('ROOM CLOSED'); cleanupGame(true); return; } gameState.room=room; gameState.myPlayer=room.players?.[currentUser.id]||null; updateGameUI(); turnTimeoutCheck(room); }); }
+
+    function cleanupGame(navigateLobby=false){ if(roomUnsub){ roomUnsub(); roomUnsub=null; } if(renderHandle) cancelAnimationFrame(renderHandle); if(diceAnimTimer) clearInterval(diceAnimTimer); if(autoPassTimer) clearTimeout(autoPassTimer); renderHandle=0; awaitingMove=false; gameState={roomCode:'',room:null,myColor:null,myPlayer:null}; if(navigateLobby) showPage('lobby'); }
+    function leaveGamePrompt(){ openModal('leaveModal') }
+    async function confirmLeave(){ const code=gameState.roomCode; const uid=currentUser.id; if(code){ const snap=await get(ref(db,'rooms/'+code)); const room=snap.val(); if(room?.players?.[uid]){ delete room.players[uid]; const count=Object.keys(room.players).length; room.phase=count?room.phase:'waiting'; await set(ref(db,'rooms/'+code),room); if(count===0) await remove(ref(db,'rooms/'+code)); } } closeModal('leaveModal'); cleanupGame(true); }
+
+    async function rollDice(){ const room=gameState.room; if(!room || !myTurn() || room.diceRoll!==0 || room.phase!=='playing' || gameState.role!=='player') return; haptic.med(); let i=0; diceAnimTimer=setInterval(()=>{ $('#diceBtn').textContent=DICE[Math.floor(Math.random()*6)]; i++; if(i>=11){ clearInterval(diceAnimTimer); diceAnimTimer=null; const final=Math.floor(Math.random()*6)+1; $('#diceBtn').textContent=DICE[final-1]; if(final===6) haptic.ok(); fbUpdate(gameState.roomCode,{'diceRoll':final,'turnUsed':false,'updatedAt':Date.now(),'turnStartedAt':Date.now()}); } },60); }
+
+    function highlightPlayable(){ clearTimeout(autoPassTimer); const room=gameState.room; if(!room || !myTurn() || !room.diceRoll || room.turnUsed) return; const can=room.tokens[gameState.myColor].some((_,i)=>isTokenPlayable(gameState.myColor,i,room.diceRoll)); if(!can){ awaitingMove=false; autoPassTimer=setTimeout(()=>{ const next=nextColor(room.currentTurn); fbUpdate(gameState.roomCode,{'currentTurn':next,'diceRoll':0,'turnUsed':true,'updatedAt':Date.now()}); showToast('NO VALID MOVE'); },1200);} else awaitingMove=true; }
+
+    async function doMove(index){ const room=gameState.room; const color=gameState.myColor; const roll=room.diceRoll; const cur=room.tokens[color][index]; const newPos=calcNewPos(color,cur,roll); if(newPos===null) return; const tokens=deepClone(room.tokens); let captured=false; if(newPos>=0 && newPos<=51 && !SAFE.includes(newPos)){ const target=getCoord(color,newPos); COLORS.filter(c=>c!==color).forEach(c=>tokens[c]=tokens[c].map(p=>{ if(p>=0&&p<=51){ const coord=getCoord(c,p); if(coord.row===target.row && coord.col===target.col){ captured=true; return -1; } } return p; })); }
+      tokens[color][index]=newPos; const allHome=tokens[color].every(p=>p===58); const next=roll===6 && !captured && !allHome ? color : nextColor(color); awaitingMove=false; const payload={'tokens':tokens,'currentTurn':next,'diceRoll':0,'phase':allHome?'finished':'playing','winner':allHome?color:null,'turnUsed':true,'updatedAt':Date.now(),'turnStartedAt':Date.now()}; await fbUpdate(gameState.roomCode,payload); haptic.rigid();
+      if(allHome && !winAwarded){ winAwarded=true; const uref=ref(db,'users/'+currentUser.id); const snap=await get(uref); const u=snap.val()||{}; await update(uref,{wins:(u.wins||0)+1,xp:(u.xp||0)+50,games:(u.games||0)+1,lastSeen:Date.now()}); const gs=await get(ref(db,'stats/totalGames')); await set(ref(db,'stats/totalGames'),(gs.val()||0)+1); }
+    }
+
+    function updateGameUI(){ const room=gameState.room; if(!room) return; $('#roomBadge').textContent='ROOM '+gameState.roomCode; $('#phaseBadge').textContent=room.phase==='playing'?'LIVE':'WAITING'; $('#phaseBadge').classList.toggle('live',room.phase==='playing'); renderPlayerStrip(); const canRoll=myTurn() && room.diceRoll===0 && room.phase==='playing' && gameState.role==='player'; $('#diceBtn').classList.toggle('disabled',!canRoll); $('#diceBtn').textContent=room.diceRoll?DICE[room.diceRoll-1]:'🎲'; $('#turnLabel').textContent=(room.currentTurn||'yellow').toUpperCase(); $('#turnHint').textContent=gameState.role==='spectator'?'Spectating live match':(myTurn()?(room.diceRoll?'Select a token':'Roll the dice'):'Opponent turn'); $('#scoreVal').textContent=gameState.myColor?(room.tokens?.[gameState.myColor]||[]).filter(p=>p===58).length:0; if(myTurn() && room.diceRoll && room.phase==='playing' && !room.turnUsed) highlightPlayable(); else awaitingMove=false; const left=Math.max(0,30-Math.floor((Date.now()-(room.turnStartedAt||Date.now()))/1000)); $('#turnTimer').textContent=left+'s'; renderChat(); if(room.phase==='finished' && room.winner && !winnerShown){ winnerShown=true; const wp=Object.values(room.players||{}).find(p=>p.color===room.winner); $('#winnerTitle').textContent=room.winner.toUpperCase()+' WINS'; $('#winnerName').textContent=wp?.name||room.winner; openModal('winnerModal'); } }
+
+    function drawBoard(){ const canvas=$('#ludoCanvas'); if(!canvas||!gameState.room) return; const ctx=canvas.getContext('2d'); const size=canvas.width; const cs=size/15; ctx.clearRect(0,0,size,size); ctx.fillStyle='#f8f7f1'; ctx.fillRect(0,0,size,size);
+      function cell(r,c,fill='#fff',stroke='rgba(0,0,0,.12)'){ ctx.fillStyle=fill; ctx.fillRect(c*cs,r*cs,cs,cs); ctx.strokeStyle=stroke; ctx.lineWidth=1; ctx.strokeRect(c*cs,r*cs,cs,cs); }
+      [['yellow',0,0],['blue',0,9],['green',9,0],['red',9,9]].forEach(([color,r,c])=>{ ctx.fillStyle=COLOR_HEX[color]; ctx.fillRect(c*cs,r*cs,6*cs,6*cs); const inset=.7*cs; const rr=(x,y,w,h,rad)=>{ctx.beginPath();ctx.moveTo(x+rad,y);ctx.arcTo(x+w,y,x+w,y+h,rad);ctx.arcTo(x+w,y+h,x,y+h,rad);ctx.arcTo(x,y+h,x,y,rad);ctx.arcTo(x,y,x+w,y,rad);ctx.closePath();}; rr(c*cs+inset,r*cs+inset,6*cs-2*inset,6*cs-2*inset,.35*cs); ctx.fillStyle='#fff'; ctx.fill(); const spots=getBaseSpots(r,c); spots.forEach(([sr,sc])=>{ ctx.beginPath(); ctx.arc(sc*cs,sr*cs,.42*cs,0,Math.PI*2); ctx.fillStyle=color==='yellow'?'rgba(255,215,0,.25)':color==='blue'?'rgba(79,142,247,.25)':color==='green'?'rgba(46,213,115,.25)':'rgba(255,71,87,.25)'; ctx.fill(); ctx.strokeStyle=COLOR_HEX[color]; ctx.lineWidth=1.5; ctx.stroke();}); });
+      OUTER_PATH.forEach(([r,c],i)=>{ let fill='#fff'; if(r===7&&c>=1&&c<=5) fill='rgba(255,215,0,.40)'; if(c===7&&r>=1&&r<=5) fill='rgba(79,142,247,.40)'; if(r===7&&c>=9&&c<=13) fill='rgba(255,71,87,.40)'; if(c===7&&r>=9&&r<=13) fill='rgba(46,213,115,.40)'; cell(r,c,fill); if(SAFE.includes(i)){ ctx.fillStyle='#444'; ctx.font=`${cs*.45}px sans-serif`; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('★',(c+.5)*cs,(r+.5)*cs); } });
+      COLORS.forEach(color=>HOME_STRETCH[color].forEach(([r,c],i)=>{ cell(r,c,color==='yellow'?'rgba(255,215,0,.67)':color==='blue'?'rgba(79,142,247,.67)':color==='green'?'rgba(46,213,115,.67)':'rgba(255,71,87,.67)'); if(i===5){ ctx.font=`${cs*.42}px sans-serif`; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillStyle='#444'; ctx.fillText('🏠',(c+.5)*cs,(r+.5)*cs); } }));
+      const tri=[['yellow',[[6,6],[9,6],[7.5,7.5]]],['blue',[[6,6],[6,9],[7.5,7.5]]],['red',[[6,9],[9,9],[7.5,7.5]]],['green',[[9,6],[9,9],[7.5,7.5]]]]; tri.forEach(([color,pts])=>{ ctx.beginPath(); ctx.moveTo(pts[0][1]*cs,pts[0][0]*cs); ctx.lineTo(pts[1][1]*cs,pts[1][0]*cs); ctx.lineTo(pts[2][1]*cs,pts[2][0]*cs); ctx.closePath(); ctx.fillStyle=COLOR_HEX[color]; ctx.fill(); }); ctx.beginPath(); ctx.arc(7.5*cs,7.5*cs,.9*cs,0,Math.PI*2); ctx.fillStyle='#fff'; ctx.fill(); ctx.fillStyle='#444'; ctx.font=`${cs*.5}px sans-serif`; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('★',7.5*cs,7.5*cs);
+      const room=gameState.room; COLORS.forEach(color=>{ const posMap={}; room.tokens[color].forEach(p=>{ if(p>=0&&p<=58) posMap[p]=(posMap[p]||0)+1; }); const seen={}; room.tokens[color].forEach((p,i)=>{ let x,y; if(p===-1){ const [r,c]=getBaseSpots(BASES[color][0],BASES[color][1])[i]; x=c*cs; y=r*cs; } else if(p===58) return; else { const coord=getCoord(color,p); const count=posMap[p]||1; const idx=seen[p]||0; seen[p]=idx+1; const off=getStackOffset(count,idx); x=(coord.col+.5+off.x)*cs; y=(coord.row+.5+off.y)*cs; }
+          const playable=color===gameState.myColor && currentPlayerColor()===color && awaitingMove && room.diceRoll && isTokenPlayable(color,i,room.diceRoll); const scale=playable?1+.08*Math.sin(pulseT):1; ctx.save(); ctx.shadowColor='rgba(0,0,0,.35)'; ctx.shadowBlur=4; ctx.beginPath(); ctx.arc(x,y,.32*cs*scale,0,Math.PI*2); ctx.fillStyle=COLOR_HEX[color]; ctx.fill(); ctx.lineWidth=playable?2.5:1.5; ctx.strokeStyle=playable?'#fff':'#1d1d24'; ctx.stroke(); ctx.beginPath(); ctx.arc(x-.08*cs,y-.08*cs,.12*cs*scale,0,Math.PI*2); ctx.fillStyle='rgba(255,255,255,.9)'; ctx.fill(); if(playable){ ctx.beginPath(); ctx.arc(x,y,.50*cs*(1+.08*Math.sin(pulseT)),0,Math.PI*2); ctx.strokeStyle=color==='yellow'?'rgba(255,215,0,.35)':color==='blue'?'rgba(79,142,247,.35)':color==='green'?'rgba(46,213,115,.35)':'rgba(255,71,87,.35)'; ctx.lineWidth=2; ctx.stroke(); } ctx.restore();
+        }); }); }
+
+    function renderLoop(){ pulseT+=.05; drawBoard(); renderHandle=requestAnimationFrame(renderLoop); }
+    function initCanvas(){ const old=$('#ludoCanvas'); if(!old) return; const host=$('#boardHost'); const rect=host.getBoundingClientRect(); const size=Math.max(180,Math.min(rect.width-8,rect.height-8,340)); const fresh=old.cloneNode(); fresh.width=size; fresh.height=size; fresh.style.width=size+'px'; fresh.style.height=size+'px'; old.replaceWith(fresh); fresh.addEventListener('click',e=>onCanvasClick(e,{rect:fresh.getBoundingClientRect()})); fresh.addEventListener('touchend',e=>{e.preventDefault(); const t=e.changedTouches[0]; onCanvasClick({clientX:t.clientX,clientY:t.clientY},{rect:fresh.getBoundingClientRect()});},{passive:false}); if(renderHandle) cancelAnimationFrame(renderHandle); renderLoop(); }
+    function onCanvasClick(e,{rect}){ if(!awaitingMove) return; const canvas=$('#ludoCanvas'); const sx=canvas.width/rect.width, sy=canvas.height/rect.height; const x=(e.clientX-rect.left)*sx, y=(e.clientY-rect.top)*sy; const cs=canvas.width/15; const tokens=gameState.room.tokens[gameState.myColor]; for(let i=0;i<tokens.length;i++){ if(!isTokenPlayable(gameState.myColor,i,gameState.room.diceRoll)) continue; let tx,ty; const p=tokens[i]; if(p===-1){ const spot=getBaseSpots(BASES[gameState.myColor][0],BASES[gameState.myColor][1])[i]; tx=spot[1]*cs; ty=spot[0]*cs; } else if(p===58) continue; else { const coord=getCoord(gameState.myColor,p); tx=(coord.col+.5)*cs; ty=(coord.row+.5)*cs; } if(Math.hypot(x-tx,y-ty)<=.55*cs) return doMove(i); } }
+
+    function loadLeaderboard(){ const users=Object.entries(allUsers||{}).map(([id,u])=>({id,...u})).sort((a,b)=>(b.wins||0)-(a.wins||0)|| (b.xp||0)-(a.xp||0)); const top=users.slice(0,3); const order=[1,0,2]; $('#podium').innerHTML=order.map((idx,pos)=>{ const u=top[idx]; if(!u) return '<div></div>'; const cls=idx===0?'first':idx===1?'second':'third'; const medal=idx===0?'🥇':idx===1?'🥈':'🥉'; const border=idx===0?'var(--gold)':idx===1?'var(--silver)':'var(--bronze)'; return `<div class="pod ${cls}"><div class="medal">${medal}</div><div class="rank-avatar" style="border:2px solid ${border};box-shadow:0 0 16px ${border}33;background:linear-gradient(135deg,#222,${border}55)">${(u.initial||u.name?.[0]||'G').toUpperCase()}</div><div class="heading" style="font-size:14px">${u.name||'Player'}</div><div class="muted">${u.wins||0} wins</div><div style="height:${idx===0?50:idx===1?38:28}px"></div></div>`}).join(''); $('#leaderRows').innerHTML=users.slice(3).map((u,i)=>`<div class="rank-row ${u.id===currentUser.id?'me':''}" style="align-items:flex-start"><div class="row gap10" style="min-width:0;flex:1"><div class="orbitron" style="width:24px;font-size:11px">${i+4}</div><div class="rank-avatar" style="width:34px;height:34px;margin:0;border:1px solid var(--border);background:${u.photo?`url(${u.photo}) center/cover`:'linear-gradient(135deg,var(--purple),var(--cyan))'}">${u.photo?'':(u.initial||u.name?.[0]||'G').toUpperCase()}</div><div class="col truncate" style="min-width:0"><div class="truncate">${u.name||'Player'}</div><div class="small muted">${u.xp||0} XP • ${u.rewards||0} reward</div></div></div><div class="small muted" style="text-align:right;white-space:nowrap">${u.wins||0}W • ${u.games||0}G</div></div>`).join('')||'<div class="card muted">No ranked players yet.</div>'; }
+
+    function loadTournaments(){ const list=Object.entries(allTournaments||{}); const live=list.find(([,t])=>t.status==='live'); $('#liveBanner').innerHTML=live?`<div class="card banner-live"><div class="badge-live" style="position:static;display:inline-block">LIVE NOW</div><div class="heading" style="margin-top:10px">${live[1].name||'Tournament'}</div><div class="muted">Prize ${live[1].prize||'-'} • ${Object.keys(live[1].participants||{}).length}/${live[1].maxPlayers||0} players</div><div class="muted">Starts ${live[1].startTime||'-'}</div><button class="btn primary" style="margin-top:12px" onclick="window.registerTournament('${live[0]}')">Join Tournament</button></div>`:''; $('#tournamentList').innerHTML=list.map(([id,t])=>{ const badge=t.status==='live'?'<span class="badge-live" style="position:static">LIVE</span>':t.status==='soon'?'<span class="badge-live" style="position:static;background:rgba(0,210,255,.12);border-color:rgba(0,210,255,.35);color:var(--cyan)">SOON</span>':'<span class="badge-live" style="position:static;background:#1b1b26;border-color:var(--border);color:var(--muted)">DONE</span>'; return `<div class="tour-card"><div class="col" style="min-width:0"><div class="row gap8">${badge}<div class="heading" style="font-size:14px">${t.name||'Tournament'}</div></div><div class="small muted">Prize: ${t.prize||'-'} • Players: ${Object.keys(t.participants||{}).length}/${t.maxPlayers||0}</div><div class="small muted">Start: ${t.startTime||'-'}</div></div></div>`; }).join('')||'<div class="card muted">No tournaments available.</div>'; }
+    window.registerTournament=async id=>{ await set(ref(db,`tournaments/${id}/participants/${currentUser.id}`),{name:currentUser.name,id:currentUser.id,photo:currentUser.photo||'',joinedAt:Date.now(),access:true}); showToast('TOURNAMENT JOINED'); };
+
+    function renderSettings(){ const defs=[['maintenanceMode','Maintenance Mode'],['tournamentMode','Tournament Mode'],['leaderboardPublic','Leaderboard Public']]; $('#settingsWrap').innerHTML=defs.map(([k,l])=>`<div class="switch"><span>${l}</span><div class="toggle ${configState[k]?'on':''}" data-setting="${k}"></div></div>`).join(''); $$('#settingsWrap .toggle').forEach(t=>t.onclick=async()=>{ const key=t.dataset.setting; const val=!configState[key]; configState[key]=val; await update(ref(db,'config'),{[key]:val}); renderSettings(); }); }
+    function renderRecentPlayers(){ const users=Object.entries(allUsers||{}).sort((a,b)=>(b[1].lastSeen||0)-(a[1].lastSeen||0)).slice(0,8); $('#recentPlayers').innerHTML=users.map(([id,u])=>`<div class="recent-row"><div class="col" style="min-width:0"><div class="truncate">${u.name||id}</div><div class="small muted">${u.wins||0} wins • ${u.xp||0} XP</div></div><div class="row gap8"><button class="btn danger" style="padding:8px 10px" data-ban="${id}">Ban</button><button class="btn" style="padding:8px 10px" data-remove-user="${id}">Remove</button></div></div>`).join('')||'<div class="muted">No players</div>'; $$('#recentPlayers [data-ban]').forEach(b=>b.onclick=()=>update(ref(db,'users/'+b.dataset.ban),{banned:true}).then(()=>showToast('PLAYER BANNED'))); $$('#recentPlayers [data-remove-user]').forEach(b=>b.onclick=()=>openConfirm('🗑️','Remove User','Delete this user profile?',()=>remove(ref(db,'users/'+b.dataset.removeUser)).then(()=>showToast('USER REMOVED')))); }
+
+    function openConfirm(icon,title,sub,ok){ $('#confirmIcon').textContent=icon; $('#confirmTitle').textContent=title; $('#confirmSub').textContent=sub; $('#confirmOk').onclick=async()=>{ await ok(); closeModal('confirmModal'); }; openModal('confirmModal'); }
+
+    function renderChat(){ const msgs=Object.values(gameState.room?.chat||{}).sort((a,b)=>(a.timestamp||0)-(b.timestamp||0)).slice(-12); $('#chatPreview').textContent=msgs.length?`${msgs[msgs.length-1].name}: ${msgs[msgs.length-1].text}`:'No messages'; $('#chatMessages').innerHTML=msgs.map(m=>`<div style="padding:6px 8px;border:1px solid var(--border);border-radius:10px;background:#10101a"><b style="font-family:Orbitron;font-size:10px">${m.name}</b><div>${m.text}</div></div>`).join(''); }
+
+    async function sendChat(){ if(gameState.role==='spectator' || !gameState.roomCode) return; const text=$('#chatInput').value.trim(); if(!text) return; const node=push(ref(db,`rooms/${gameState.roomCode}/chat`)); await set(node,{uid:currentUser.id,name:currentUser.name,text,timestamp:Date.now()}); $('#chatInput').value=''; }
+
+    async function turnTimeoutCheck(room){ if(!room || room.phase!=='playing') return; const elapsed=Date.now()-(room.turnStartedAt||Date.now()); if(elapsed<30000) return; if(room.diceRoll===0){ await fbUpdate(gameState.roomCode,{'currentTurn':nextColor(room.currentTurn),'diceRoll':0,'turnUsed':true,'updatedAt':Date.now(),'turnStartedAt':Date.now()}); showToast('TURN SKIPPED'); } else if(!room.turnUsed){ await fbUpdate(gameState.roomCode,{'currentTurn':nextColor(room.currentTurn),'diceRoll':0,'turnUsed':true,'updatedAt':Date.now(),'turnStartedAt':Date.now()}); showToast('MOVE TIME EXPIRED'); } }
+
+    function initLoading(){ const tips=['CONNECTING TO SERVER','LOADING ASSETS','SYNCING LEADERBOARD','INITIALIZING ROOMS','ALMOST READY']; let p=0,idx=0; const bar=$('#loadingBar'), tip=$('#loadingTip'); const timer=setInterval(()=>{ if(loadingDone){clearInterval(timer); return;} p=Math.min(95,p+Math.floor(Math.random()*13)); bar.style.width=p+'%'; tip.textContent=tips[idx++%tips.length]; },350); return ()=>{ loadingDone=true; bar.style.width='100%'; tip.textContent='READY'; setTimeout(()=>showPage('home'),600); } }
+
+    async function boot(){ try{ tg?.expand?.(); tg?.ready?.(); tg?.setHeaderColor?.('#0a0a0f'); const finishLoading=initLoading(); app=initializeApp(firebaseConfig); db=getDatabase(app); await initUser(); startWatchers(); renderSettings(); finishLoading(); }catch(err){ console.error(err); showToast('INIT FAILED'); } }
+
+    window.addEventListener('resize',()=>{ clearTimeout(resizeTimer); resizeTimer=setTimeout(()=>{ if($('#game').classList.contains('active')) initCanvas(); },150); });
+    $$('.menu-card').forEach(c=>c.onclick=()=>showPage(c.dataset.nav)); $$('.bottom-nav .nav-btn, .admin-nav .nav-btn').forEach(b=>b.onclick=()=>showPage(b.dataset.page)); $$('.tab').forEach(t=>t.onclick=()=>{ $$('.tab').forEach(x=>x.classList.remove('active')); t.classList.add('active'); currentLeaderboardTab=t.dataset.ltab; loadLeaderboard(); });
+    $('#joinBtn').onclick=joinOrCreate; $('#createRoomBtn').onclick=createRoom; $('#leaveBtn').onclick=leaveGamePrompt; $('#confirmLeaveBtn').onclick=confirmLeave; $('#diceBtn').onclick=rollDice; $('#newGameBtn').onclick=()=>{ closeModal('winnerModal'); cleanupGame(true); };
+    $('#adminEnter').onclick=()=>{ if($('#adminPass').value==='90877'){ $('#adminLogin').classList.add('hidden'); $('#adminPanel').classList.remove('hidden'); $('#adminNav').classList.remove('hidden'); $('#adminError').style.display='none'; haptic.ok(); } else { $('#adminError').style.display='block'; haptic.err(); } };
+    $('#createTourBtn').onclick=async()=>{ const name=$('#tourName').value.trim(), prize=$('#tourPrize').value.trim(), maxPlayers=parseInt($('#tourMax').value||'0',10), startTime=$('#tourStart').value||''; if(!name) return showToast('ENTER TOURNAMENT NAME'); const node=push(ref(db,'tournaments')); await set(node,{name,prize,maxPlayers,startTime,status:'soon',participants:{},createdAt:Date.now()}); showToast('TOURNAMENT CREATED'); $('#tourName').value=$('#tourPrize').value=$('#tourMax').value=$('#tourStart').value=''; };
+    $('#sendBroadcastBtn').onclick=async()=>{ const message=$('#broadcastText').value.trim(); if(!message) return; await set(ref(db,'broadcast'),{message,timestamp:Date.now()}); $('#broadcastText').value=''; showToast('BROADCAST SENT'); };
+    $('#startTourBtn').onclick=async()=>{ const id=$('#startTourId').value.trim(); if(!id) return showToast('ENTER TOURNAMENT ID'); const snap=await get(ref(db,'tournaments/'+id)); const tour=snap.val(); if(!tour) return showToast('TOURNAMENT NOT FOUND'); const participants=tour.participants||{}; const invites={}; Object.keys(participants).forEach(uid=>{ invites[`tournaments/${id}/participants/${uid}/inviteSent`]=true; invites[`tournaments/${id}/participants/${uid}/access`]=true; }); invites[`tournaments/${id}/status`]='live'; await update(ref(db),invites); showToast('TOURNAMENT STARTED'); };
+    $('#sendRewardBtn').onclick=async()=>{ const uid=$('#rewardUserId').value.trim(); const amt=parseInt($('#rewardAmount').value||'0',10); if(!uid||!amt) return showToast('ENTER USER AND AMOUNT'); await runTransaction(ref(db,'users/'+uid+'/rewards'),v=>(v||0)+amt); showToast('REWARD SENT'); };
+    $('#chatToggle').onclick=()=>$('#chatPanel').classList.toggle('hidden'); $('#chatSend').onclick=sendChat; $('#chatInput').addEventListener('keydown',e=>{ if(e.key==='Enter') sendChat(); });
+    $('#clearRoomsBtn').onclick=()=>openConfirm('🧨','Clear Rooms','Delete every active room?',()=>remove(ref(db,'rooms')).then(()=>showToast('ROOMS CLEARED')));
+    $('#resetScoresBtn').onclick=()=>openConfirm('♻️','Reset Scores','Set all wins and XP to zero?',async()=>{ const snap=await get(ref(db,'users')); const users=snap.val()||{}; const up={}; Object.keys(users).forEach(id=>{ up[`users/${id}/wins`]=0; up[`users/${id}/xp`]=0; }); await update(ref(db),up); showToast('SCORES RESET'); });
+
+    boot();
+  </script>
+</body>
+</html>
